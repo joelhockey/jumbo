@@ -1,11 +1,11 @@
 /*
  * Copyright 2010 Joel Hockey (joel.hockey@gmail.com).  All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
  *     * Redistributions of source code must retain the above copyright
  *       notice, this list of conditions and the following disclaimer.
- * 
+ *
  * THIS SOURCE CODE IS PROVIDED BY JOEL HOCKEY WITH A 30-DAY MONEY BACK
  * GUARANTEE.  IF THIS CODE DOES NOT MEAN WHAT IT SAYS IT MEANS WITHIN THE
  * FIRST 30 DAYS, SIMPLY RETURN THIS CODE IN ORIGINAL CONDITION FOR A PARTIAL
@@ -30,7 +30,7 @@ public class ISO24727 {
         private int sw;
         protected TLV tlv;
         private String returnCode;
-        
+
         public ISO24727Return(byte[] apdu, String action, int tag) throws ISO24727Exception {
             this(apdu, action, tag, RETURN_CODE_API_OK);
         }
@@ -39,33 +39,42 @@ public class ISO24727 {
                 throw new ISO24727Exception("Invalid APDU: " + Hex.b2s(apdu), action, 0x6f00, null);
             }
 
-            sw = (apdu[-2] & 0xff) << 8 | (apdu[-1] & 0xff);
-        
+            sw = (apdu[apdu.length - 2] & 0xff) << 8 | (apdu[apdu.length - 1] & 0xff);
+
             if (sw != 0x9000) {
                 throw new ISO24727Exception("Expected SW!=0x9000, apdu: " + Hex.b2s(apdu), action, sw, null);
             }
-            
-            tlv = new TLV(apdu);
-            if (tlv.getcc() != 0x60 || tlv.gett() != tag) { 
-                throw new ISO24727Exception(String.format("%s ExpectedAPPLICTION %s], got TLV:\n%s", action, tag, tlv.dump()),
+
+            if (apdu.length == 2) {
+                throw new ISO24727Exception("No data returned in apdu", action, sw, null);
+            }
+
+            try {
+                tlv = new TLV(apdu);
+            } catch (Exception e) {
+                throw new ISO24727Exception(e.getMessage(), action, sw, null);
+            }
+
+            if (tlv.getcc() != 0x60 || tlv.gett() != tag) {
+                throw new ISO24727Exception(String.format("%s Expected [APPLICTION %s], got TLV:\n%s", action, tag, tlv.dump()),
                         action, sw, null);
             }
 
             returnCode = new String(tlv.get(-1).getv());
             if (!returnCode.equals(expectedReturnCode)) {
-                throw new ISO24727Exception(String.format("Expected%s]", expectedReturnCode), action, sw, returnCode);
+                throw new ISO24727Exception(String.format("Expected [%s]", expectedReturnCode), action, sw, returnCode);
             }
         }
-        
+
         public int getSW() { return sw; }
         public TLV getTLV() { return tlv; }
         public String getReturnCode() { return returnCode; }
     }
-    
+
     // CardApplicationConnect
     public static byte[] cardApplicationConnect(String ifdName, byte[] aid) {
         return
-        TLV.encode(0x60, 2007, 
+        TLV.encode(0x60, 2007,
             new TLV(0xa0, 1, // CardApplicationConnectArgument
                 new TLV(0xa0, 0, // CardApplicationPathInfo
                     ifdName == null ? null : new TLV(0x80, 3, ifdName.getBytes()), // ifdName UTF8String
@@ -84,7 +93,7 @@ public class ISO24727 {
 
     // CardApplicationStartSession
     public static byte[] cardApplicationStartSession(byte[] connectionHandle, int didScope, byte[] didName, byte[] didAuthData) {
-        return TLV.encode(0x60, 2011, 
+        return TLV.encode(0x60, 2011,
             new TLV(0xa0, 1, // CardApplicationStartSessionArgument
                 new TLV(0x80, 0, connectionHandle), // connectionHandle
                 new TLV(0xa0, 1, new TLV(0x80, didScope, (byte[]) null)), // didScope EXPLICIT0] -> IMPLICIT0 (local) / 1 (global)] NULL
@@ -199,7 +208,7 @@ public class ISO24727 {
         }
         public TLV getAcl() { return tlv.get(-2).get(0); }
     }
-    
+
     // DataSetSelect
     public static byte[] dataSetSelect(byte[] connectionHandle, String dataSetName) {
         return TLV.encode(0x60, 2037,
@@ -214,7 +223,7 @@ public class ISO24727 {
             super(apdu, "DataSetSelect", 2038);
         }
     }
-    
+
     // DSIRead
     public static byte[] dsiRead(byte[] connectionHandle, String dsiName) {
         return TLV.encode(0x60, 2049,
@@ -230,7 +239,7 @@ public class ISO24727 {
         }
         public TLV getDsi() { return tlv.get(-2).get(0); }
     }
-    
+
 // AccessControlList ::= SET OF AccessRule
 // AccessRule ::= SEQUENCE {
 //   cardApplicationService [0] IMPLICIT CardApplicationServiceName,
@@ -300,7 +309,7 @@ public class ISO24727 {
             throw new IllegalArgumentException("Error: Unknown SecurityCondition tag: " + tlv.gett());
         }
     }
-    
+
     public static String formatACL(TLV acl) {
         StringBuilder sb = new StringBuilder();
         // check if TLV is SET (AccessControlList) or SEQUENCE (AccessRule)
@@ -323,7 +332,7 @@ public class ISO24727 {
             String newline = " ";
             if ((sc.gett()  == 4 || sc.gett() == 5) && sc.split().size() > 1) {  // and/or
                 newline = "\n  ";
-            }            
+            }
             sb.append(new String(cas.getv()));
             sb.append('.').append(new String(action.getv()));
             sb.append(newline);
