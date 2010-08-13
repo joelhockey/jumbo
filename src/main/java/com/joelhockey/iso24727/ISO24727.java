@@ -25,6 +25,7 @@ import com.joelhockey.codec.TLV;
 public class ISO24727 {
     public static final String AID_ALPHA = "E82881C11702";
     public static final String RETURN_CODE_API_OK = "API_OK";
+    public static final String RETURN_CODE_API_NEXT_REQUEST = "API_NEXT_REQUEST";
 
     public static class ISO24727Return {
         private int sw;
@@ -92,12 +93,12 @@ public class ISO24727 {
     }
 
     // CardApplicationStartSession
-    public static byte[] cardApplicationStartSession(byte[] connectionHandle, int didScope, byte[] didName, byte[] didAuthData) {
+    public static byte[] cardApplicationStartSession(byte[] connectionHandle, int didScope, String didName, byte[] didAuthData) {
         return TLV.encode(0x60, 2011,
             new TLV(0xa0, 1, // CardApplicationStartSessionArgument
                 new TLV(0x80, 0, connectionHandle), // connectionHandle
                 new TLV(0xa0, 1, new TLV(0x80, didScope, (byte[]) null)), // didScope EXPLICIT [0] -> IMPLICIT [0 (local) / 1 (global)] NULL
-                new TLV(0x80, 2, didName),
+                new TLV(0x80, 2, didName.getBytes()),
                 new TLV(0x80, 3, didAuthData)
             )
         );
