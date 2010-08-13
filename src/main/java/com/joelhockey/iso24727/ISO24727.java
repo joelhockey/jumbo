@@ -96,7 +96,7 @@ public class ISO24727 {
         return TLV.encode(0x60, 2011,
             new TLV(0xa0, 1, // CardApplicationStartSessionArgument
                 new TLV(0x80, 0, connectionHandle), // connectionHandle
-                new TLV(0xa0, 1, new TLV(0x80, didScope, (byte[]) null)), // didScope EXPLICIT0] -> IMPLICIT0 (local) / 1 (global)] NULL
+                new TLV(0xa0, 1, new TLV(0x80, didScope, (byte[]) null)), // didScope EXPLICIT [0] -> IMPLICIT [0 (local) / 1 (global)] NULL
                 new TLV(0x80, 2, didName),
                 new TLV(0x80, 3, didAuthData)
             )

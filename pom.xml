@@ -35,6 +35,14 @@
       <artifactId>smartcard</artifactId>
       <version>1.0</version>
     </dependency>
+    
+    <!-- provided -->
+    <dependency>
+      <groupId>commons-logging</groupId>
+      <artifactId>commons-logging</artifactId>
+      <version>1.1</version>
+      <scope>provided</scope>
+    </dependency>
   </dependencies>
 
 </project>
