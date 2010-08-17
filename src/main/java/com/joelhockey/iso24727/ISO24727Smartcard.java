@@ -45,7 +45,7 @@ public class ISO24727Smartcard {
     private boolean secureOn = false;
     private SecureMessaging secure;
     private Map<String, byte[]> cnxnHandles = new HashMap<String, byte[]>();
-    private String currentAid;
+    private String currentAid = "";
     private String currentDataSet = "";
 
     public ISO24727Smartcard(Smartcard card) {
@@ -59,7 +59,7 @@ public class ISO24727Smartcard {
         if (currentAid.equals(Hex.B2S(aidbuf))) {
             return;
         }
-        byte[] req = ISO24727.cardApplicationConnect(card.getIFDName(), aidbuf);
+        TLV req = ISO24727.cardApplicationConnect(card.getIFDName(), aidbuf);
         byte[] res = transmit(req, "CardApplicationConnect", aid);
         CardApplicationConnectReturn isoReturn = new CardApplicationConnectReturn(res);
         currentAid = Hex.B2S(aidbuf);
@@ -68,7 +68,7 @@ public class ISO24727Smartcard {
 
     public List<byte[]> cardApplicationList() throws ISO24727Exception, SmartcardException, SecureMessagingException {
         cardApplicationConnect(AID_ALPHA);
-        byte[] req = ISO24727.cardApplicationList(cnxnHandle());
+        TLV req = ISO24727.cardApplicationList(cnxnHandle());
         byte[] res = transmit(req, "CardApplicationList", null);
         CardApplicationListReturn isoReturn = new CardApplicationListReturn(res);
         return isoReturn.getCardApplicationNameList();
@@ -76,14 +76,14 @@ public class ISO24727Smartcard {
 
     public TLV didGet(int didScope, String didName) throws ISO24727Exception, SmartcardException, SecureMessagingException {
         cardApplicationConnect(AID_ALPHA);
-        byte[] req = ISO24727.didGet(cnxnHandle(), didScope, didName);
+        TLV req = ISO24727.didGet(cnxnHandle(), didScope, didName);
         byte[] res = transmit(req, "DIDGet", didScope + ":" + didName);
         DIDGetReturn isoReturn = new DIDGetReturn(res);
         return isoReturn.getMarker();
     }
 
     public TLV didAuthenticate(int didScope, String didName, byte[] didAuthData) throws ISO24727Exception, SmartcardException, SecureMessagingException {
-        byte[] req = ISO24727.didAuthenticate(cnxnHandle(), didScope, didName, didAuthData);
+        TLV req = ISO24727.didAuthenticate(cnxnHandle(), didScope, didName, didAuthData);
         String param = null;
         if (log.isDebugEnabled()) {
             param = didScope + ":" + didName + ":" + Hex.b2s(didAuthData);
@@ -98,7 +98,7 @@ public class ISO24727Smartcard {
         if (currentDataSet.equals(dataSetName)) {
             return;
         }
-        byte[] req = ISO24727.dataSetSelect(cnxnHandle(), dataSetName);
+        TLV req = ISO24727.dataSetSelect(cnxnHandle(), dataSetName);
         byte[] res = transmit(req, "DataSetSelect", aid + ":" + dataSetName);
         DataSetSelectReturn isoReturn = new DataSetSelectReturn(res);
         currentDataSet = dataSetName;
@@ -106,7 +106,7 @@ public class ISO24727Smartcard {
 
     public TLV dsiRead(String aid, String dataSetName, String dsiName) throws ISO24727Exception, SmartcardException, SecureMessagingException {
         dataSetSelect(aid, dataSetName);
-        byte[] req = ISO24727.dsiRead(cnxnHandle(), dsiName);
+        TLV req = ISO24727.dsiRead(cnxnHandle(), dsiName);
         byte[] res = transmit(req, "DSIRead", aid + ":" + dataSetName + ":" + dsiName);
         DSIReadReturn isoReturn = new DSIReadReturn(res);
         return isoReturn.getDsi();
@@ -114,7 +114,7 @@ public class ISO24727Smartcard {
 
     public TLV aclListApp(String aid) throws ISO24727Exception, SmartcardException, SecureMessagingException {
         cardApplicationConnect(AID_ALPHA);
-        byte[] req = ISO24727.aclListApp(cnxnHandle(), Hex.s2b(aid));
+        TLV req = ISO24727.aclListApp(cnxnHandle(), Hex.s2b(aid));
         byte[] res = transmit(req, "ACLList", "AID " + aid);
         ACLListReturn isoReturn = new ACLListReturn(res);
         return isoReturn.getAcl();
@@ -122,7 +122,7 @@ public class ISO24727Smartcard {
 
     public TLV aclListDID(String aid, String didName) throws ISO24727Exception, SmartcardException, SecureMessagingException {
         cardApplicationConnect(aid);
-        byte[] req = ISO24727.aclListDID(cnxnHandle(), didName);
+        TLV req = ISO24727.aclListDID(cnxnHandle(), didName);
         byte[] res = transmit(req, "ACLList", "DID " + didName);
         ACLListReturn isoReturn = new ACLListReturn(res);
         return isoReturn.getAcl();
@@ -130,21 +130,40 @@ public class ISO24727Smartcard {
 
     public TLV aclListDataSet(String aid, String dataSetName) throws ISO24727Exception, SmartcardException, SecureMessagingException {
         cardApplicationConnect(aid);
-        byte[] req = ISO24727.aclListDataSet(cnxnHandle(), dataSetName);
+        TLV req = ISO24727.aclListDataSet(cnxnHandle(), dataSetName);
         byte[] res = transmit(req, "ACLList", "DataSet " + aid + ":" + dataSetName);
         ACLListReturn isoReturn = new ACLListReturn(res);
         return isoReturn.getAcl();
     }
 
-    private byte[] transmit(byte[] req, String action, String params) throws ISO24727Exception, SmartcardException, SecureMessagingException {
-        if (params != null) {
-            action += " " + params;
+    private byte[] transmit(TLV req, String action, String params) throws ISO24727Exception, SmartcardException, SecureMessagingException {
+        if (log.isInfoEnabled()) {
+            if (params != null) {
+                action += " " + params;
+            }
+            log.info("> " + action);
         }
-        if (secureOn) req = secure.encryptAndMac(req);
-        APDURes res = card.transmit(cla, ins, 0, 0, req, 0);
+        if (log.isDebugEnabled()) {
+            log.debug("\n" + req.dump());
+        }
+        long start = System.currentTimeMillis();
+
+        byte[] encoded = req.encode();
+        if (secureOn) {
+            encoded = secure.encryptAndMac(encoded);
+        }
+        APDURes res = card.transmit(cla, ins, 0, 0, encoded, 0);
         if (res.getSW() != SW_9000_OK) {
-            throw new ISO24727Exception("Expected SW!=0x9000, apdu: " + Hex.b2s(res.getBytes()), action, res.getSW(), null);
+            throw new ISO24727Exception("Error expected SW=0x9000, got apdu: " + Hex.b2s(res.getBytes()), action, res.getSW(), null);
         }
-        return secureOn ? secure.decryptAndValidateMac(res.getData()) : res.getBytes();
+        long end = java.lang.System.currentTimeMillis();
+        encoded = res.getData();
+        if (log.isInfoEnabled()) {
+            log.info("< " + action + " (" + (end-start) + ") " + Hex.b2s(encoded));
+        }
+        if (secureOn) {
+            encoded = secure.decryptAndValidateMac(encoded);
+        }
+        return encoded;
     }
 }

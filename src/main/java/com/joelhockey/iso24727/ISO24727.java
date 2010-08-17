@@ -73,9 +73,8 @@ public class ISO24727 {
     }
 
     // CardApplicationConnect
-    public static byte[] cardApplicationConnect(String ifdName, byte[] aid) {
-        return
-        TLV.encode(0x60, 2007,
+    public static TLV cardApplicationConnect(String ifdName, byte[] aid) {
+        return new TLV(0x60, 2007,
             new TLV(0xa0, 1, // CardApplicationConnectArgument
                 new TLV(0xa0, 0, // CardApplicationPathInfo
                     ifdName == null ? null : new TLV(0x80, 3, ifdName.getBytes()), // ifdName UTF8String
@@ -93,8 +92,8 @@ public class ISO24727 {
     }
 
     // CardApplicationStartSession
-    public static byte[] cardApplicationStartSession(byte[] connectionHandle, int didScope, String didName, byte[] didAuthData) {
-        return TLV.encode(0x60, 2011,
+    public static TLV cardApplicationStartSession(byte[] connectionHandle, int didScope, String didName, byte[] didAuthData) {
+        return new TLV(0x60, 2011,
             new TLV(0xa0, 1, // CardApplicationStartSessionArgument
                 new TLV(0x80, 0, connectionHandle), // connectionHandle
                 new TLV(0xa0, 1, new TLV(0x80, didScope, (byte[]) null)), // didScope EXPLICIT [0] -> IMPLICIT [0 (local) / 1 (global)] NULL
@@ -114,8 +113,8 @@ public class ISO24727 {
     }
 
     // CardApplicationList
-    public static byte[] cardApplicationList(byte[] connectionHandle) {
-        return TLV.encode(0x60, 2015,
+    public static TLV cardApplicationList(byte[] connectionHandle) {
+        return new TLV(0x60, 2015,
             new TLV(0xa0, 1, // CardApplicationSListArgument
                 new TLV(0x80, 0, connectionHandle) // connectionHandle
             )
@@ -135,8 +134,8 @@ public class ISO24727 {
     }
 
     // DIDAuthenticate
-    public static byte[] didAuthenticate(byte[] connectionHandle, int didScope, String didName, byte[] didAuthData) {
-        return TLV.encode(0x60, 2075,
+    public static TLV didAuthenticate(byte[] connectionHandle, int didScope, String didName, byte[] didAuthData) {
+        return new TLV(0x60, 2075,
             new TLV(0xa0, 1, // DIDAuthenticateArgument
                 new TLV(0x80, 0, connectionHandle), // connectionHandle
                 new TLV(0xa0, 1, new TLV(0x80, didScope, (byte[]) null)), // didScope EXPLICIT0] -> IMPLICIT0 (local) / 1 (global)] NULL
@@ -156,8 +155,8 @@ public class ISO24727 {
     }
 
     // DIDGet
-    public static byte[] didGet(byte[] connectionHandle, int didScope, String didName) {
-        return TLV.encode(0x60, 2069,
+    public static TLV didGet(byte[] connectionHandle, int didScope, String didName) {
+        return new TLV(0x60, 2069,
             new TLV(0xa0, 1, // DIDAuthenticateArgument
                 new TLV(0x80, 0, connectionHandle), // connectionHandle
                 new TLV(0xa0, 1, new TLV(0x80, didScope, (byte[]) null)), // didScope EXPLICIT0] -> IMPLICIT0 (local) / 1 (global)] NULL
@@ -173,8 +172,8 @@ public class ISO24727 {
     }
 
     // ACLList
-    public static byte[] aclListDataSet(byte[] connectionHandle, String dataSet) {
-        return TLV.encode(0x60, 2077,
+    public static TLV aclListDataSet(byte[] connectionHandle, String dataSet) {
+        return new TLV(0x60, 2077,
             new TLV(0xa0, 1, // ACLListArgument
                 new TLV(0x80, 0, connectionHandle), // connectionHandle
                 new TLV(0x80, 1, "DATA-SET".getBytes()), // TargetType
@@ -183,8 +182,8 @@ public class ISO24727 {
         );
     }
 
-    public static byte[] aclListDID(byte[] connectionHandle, String didName) {
-        return TLV.encode(0x60, 2077,
+    public static TLV aclListDID(byte[] connectionHandle, String didName) {
+        return new TLV(0x60, 2077,
             new TLV(0xa0, 1, // ACLListArgument
                 new TLV(0x80, 0, connectionHandle), // connectionHandle
                 new TLV(0x80, 1, "DIFFERENTIAL-IDENTITY".getBytes()), // TargetType
@@ -193,8 +192,8 @@ public class ISO24727 {
         );
     }
 
-    public static byte[] aclListApp(byte[] connectionHandle, byte[] aid) {
-        return TLV.encode(0x60, 2077,
+    public static TLV aclListApp(byte[] connectionHandle, byte[] aid) {
+        return new TLV(0x60, 2077,
             new TLV(0xa0, 1, // ACLListArgument
                 new TLV(0x80, 0, connectionHandle), // connectionHandle
                 new TLV(0x80, 1, "CARD-APPLICATION".getBytes()), // TargetType
@@ -211,8 +210,8 @@ public class ISO24727 {
     }
 
     // DataSetSelect
-    public static byte[] dataSetSelect(byte[] connectionHandle, String dataSetName) {
-        return TLV.encode(0x60, 2037,
+    public static TLV dataSetSelect(byte[] connectionHandle, String dataSetName) {
+        return new TLV(0x60, 2037,
             new TLV(0xa0, 1, // DataSetSelectArgument
                 new TLV(0x80, 0, connectionHandle), // connectionHandle
                 new TLV(0x80, 1, dataSetName.getBytes()) // DataSetName
@@ -226,8 +225,8 @@ public class ISO24727 {
     }
 
     // DSIRead
-    public static byte[] dsiRead(byte[] connectionHandle, String dsiName) {
-        return TLV.encode(0x60, 2049,
+    public static TLV dsiRead(byte[] connectionHandle, String dsiName) {
+        return new TLV(0x60, 2049,
             new TLV(0xa0, 1, // DSIReadArgument
                 new TLV(0x80, 0, connectionHandle), // connectionHandle
                 new TLV(0x80, 1, dsiName.getBytes()) // DSIName
