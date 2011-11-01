@@ -13,27 +13,28 @@
  * BRACE-POSITIONING AND INDENTATION.  THIS WARRANTY IS VOID IF THE CODE IS
  * FOUND TO HAVE BEEN COMPILED.  NO FURTHER WARRANTY IS OFFERED.
  */
-package com.joelhockey.iso24727;
+package net.java.jless.iso24727;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import net.java.jless.codec.Hex;
+import net.java.jless.codec.TLV;
+import net.java.jless.iso24727.ISO24727.ACLListReturn;
+import net.java.jless.iso24727.ISO24727.CardApplicationConnectReturn;
+import net.java.jless.iso24727.ISO24727.CardApplicationListReturn;
+import net.java.jless.iso24727.ISO24727.DIDAuthenticateReturn;
+import net.java.jless.iso24727.ISO24727.DIDGetReturn;
+import net.java.jless.iso24727.ISO24727.DSIReadReturn;
+import net.java.jless.iso24727.ISO24727.DataSetSelectReturn;
+import net.java.jless.smartcard.APDURes;
+import net.java.jless.smartcard.Smartcard;
+import net.java.jless.smartcard.SmartcardException;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import com.joelhockey.codec.Hex;
-import com.joelhockey.codec.TLV;
-import com.joelhockey.iso24727.ISO24727.ACLListReturn;
-import com.joelhockey.iso24727.ISO24727.CardApplicationConnectReturn;
-import com.joelhockey.iso24727.ISO24727.CardApplicationListReturn;
-import com.joelhockey.iso24727.ISO24727.DIDAuthenticateReturn;
-import com.joelhockey.iso24727.ISO24727.DIDGetReturn;
-import com.joelhockey.iso24727.ISO24727.DSIReadReturn;
-import com.joelhockey.iso24727.ISO24727.DataSetSelectReturn;
-import com.joelhockey.smartcard.APDURes;
-import com.joelhockey.smartcard.Smartcard;
-import com.joelhockey.smartcard.SmartcardException;
 
 public class ISO24727Smartcard {
     private static final Log log = LogFactory.getLog(ISO24727Smartcard.class);

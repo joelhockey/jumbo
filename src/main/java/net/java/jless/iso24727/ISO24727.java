@@ -13,14 +13,15 @@
  * BRACE-POSITIONING AND INDENTATION.  THIS WARRANTY IS VOID IF THE CODE IS
  * FOUND TO HAVE BEEN COMPILED.  NO FURTHER WARRANTY IS OFFERED.
  */
-package com.joelhockey.iso24727;
+package net.java.jless.iso24727;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import com.joelhockey.codec.Hex;
-import com.joelhockey.codec.TLV;
+import net.java.jless.codec.Hex;
+import net.java.jless.codec.TLV;
+
 
 public class ISO24727 {
     public static final String AID_ALPHA = "E82881C11702";

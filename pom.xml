@@ -4,7 +4,7 @@
   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
   <modelVersion>4.0.0</modelVersion>
 
-  <groupId>com.joelhockey</groupId>
+  <groupId>net.java.jless</groupId>
   <artifactId>iso24727</artifactId>
   <version>1.0</version>
   <name>iso24727</name>
@@ -26,17 +26,12 @@
 
   <dependencies>
     <dependency>
-      <groupId>com.joelhockey</groupId>
-      <artifactId>codec</artifactId>
-      <version>1.0</version>
-    </dependency>
-    <dependency>
-      <groupId>com.joelhockey</groupId>
+      <groupId>net.java.jless</groupId>
       <artifactId>jless</artifactId>
       <version>1.0</version>
     </dependency>
     <dependency>
-      <groupId>com.joelhockey</groupId>
+      <groupId>net.java.jless</groupId>
       <artifactId>smartcard</artifactId>
       <version>1.0</version>
     </dependency>

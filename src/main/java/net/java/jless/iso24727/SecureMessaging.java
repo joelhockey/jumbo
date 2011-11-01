@@ -13,7 +13,7 @@
  * BRACE-POSITIONING AND INDENTATION.  THIS WARRANTY IS VOID IF THE CODE IS
  * FOUND TO HAVE BEEN COMPILED.  NO FURTHER WARRANTY IS OFFERED.
  */
-package com.joelhockey.iso24727;
+package net.java.jless.iso24727;
 
 import java.security.GeneralSecurityException;
 import java.security.MessageDigest;
@@ -25,9 +25,10 @@ import javax.crypto.Cipher;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 
-import com.joelhockey.codec.Buf;
-import com.joelhockey.codec.Hex;
-import com.joelhockey.codec.TLV;
+import net.java.jless.codec.Buf;
+import net.java.jless.codec.Hex;
+import net.java.jless.codec.TLV;
+
 
 /**
  * ISO24727-4 Secure Messaging 
