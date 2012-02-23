@@ -1,18 +1,25 @@
 /*
- * Copyright 2010 Joel Hockey (joel.hockey@gmail.com).  All rights reserved.
+ * Copyright 2010-2012 Joel Hockey (joel.hockey@gmail.com). All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are met:
- *     * Redistributions of source code must retain the above copyright
- *       notice, this list of conditions and the following disclaimer.
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
  *
- * THIS SOURCE CODE IS PROVIDED BY JOEL HOCKEY WITH A 30-DAY MONEY BACK
- * GUARANTEE.  IF THIS CODE DOES NOT MEAN WHAT IT SAYS IT MEANS WITHIN THE
- * FIRST 30 DAYS, SIMPLY RETURN THIS CODE IN ORIGINAL CONDITION FOR A PARTIAL
- * REFUND.  IN ADDITION, I WILL REFORMAT THIS CODE USING YOUR PREFERRED
- * BRACE-POSITIONING AND INDENTATION.  THIS WARRANTY IS VOID IF THE CODE IS
- * FOUND TO HAVE BEEN COMPILED.  NO FURTHER WARRANTY IS OFFERED.
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ * THE SOFTWARE.
  */
+
 package net.java.jless.iso24727;
 
 import java.util.ArrayList;
@@ -22,12 +29,17 @@ import java.util.List;
 import net.java.jless.codec.Hex;
 import net.java.jless.codec.TLV;
 
-
+/**
+ * Class contains static helpers to generate requests and parse responses.
+ */
 public class ISO24727 {
     public static final String AID_ALPHA = "E82881C11702";
     public static final String RETURN_CODE_API_OK = "API_OK";
     public static final String RETURN_CODE_API_NEXT_REQUEST = "API_NEXT_REQUEST";
 
+    /**
+     * Base class for responses
+     */
     public static class ISO24727Return {
         private int sw;
         protected TLV tlv;
@@ -68,11 +80,15 @@ public class ISO24727 {
             }
         }
 
+        /** @return status word */
         public int getSW() { return sw; }
+        /** @return TLV response */
         public TLV getTLV() { return tlv; }
+        /** @return return code */
         public String getReturnCode() { return returnCode; }
     }
 
+    // ===== Connection Service =====
     // CardApplicationConnect
     public static TLV cardApplicationConnect(String ifdName, byte[] aid) {
         return new TLV(0x60, 2007,
@@ -91,6 +107,8 @@ public class ISO24727 {
         }
         public byte[] getConnectionHandle() { return tlv.get(-2).get(0).getv(); }
     }
+
+    // CardApplicationDisconnect
 
     // CardApplicationStartSession
     public static TLV cardApplicationStartSession(byte[] connectionHandle, int didScope, String didName, byte[] didAuthData) {
@@ -113,10 +131,13 @@ public class ISO24727 {
         public TLV getAuthProtocolData() { return tlv.get(-2).get(0).get(0); }
     }
 
+    // CardApplicationEndSession
+
+    // ===== Card-Application Service =====
     // CardApplicationList
     public static TLV cardApplicationList(byte[] connectionHandle) {
         return new TLV(0x60, 2015,
-            new TLV(0xa0, 1, // CardApplicationSListArgument
+            new TLV(0xa0, 1, // CardApplicationListArgument
                 new TLV(0x80, 0, connectionHandle) // connectionHandle
             )
         );
@@ -133,6 +154,147 @@ public class ISO24727 {
             return result;
         }
     }
+
+    // CardApplicationCreate
+    // CardApplicationDelete
+    // CardApplicationServiceList
+    // CardApplicationServiceCreate
+    // CardApplicationServiceLoad
+    // CardApplicationServiceDelete
+    // CardApplicationServiceDescribe
+
+    // ===== Named Data Service =====
+    // DataSetList
+    public static TLV dataSetList(byte[] connectionHandle) {
+        return new TLV(0x60, 2033,
+            new TLV(0xa0, 1, // DataSetListArgument
+                new TLV(0x80, 0, connectionHandle) // connectionHandle
+            )
+        );
+    }
+    public static class DataSetListReturn extends ISO24727Return {
+        public DataSetListReturn(byte[] apdu) throws ISO24727Exception {
+            super(apdu, "DataSetList", 2034);
+        }
+        public List<String> getDataSetNameList() {
+            List<String> result = new ArrayList<String>();
+            for (TLV name : tlv.get(0).get(0).split()) {
+                result.add(new String(name.getv()));
+            }
+            return result;
+        }
+    }
+
+    // DataSetCreate
+    // DataSetSelect
+    public static TLV dataSetSelect(byte[] connectionHandle, String dataSetName) {
+        return new TLV(0x60, 2037,
+            new TLV(0xa0, 1, // DataSetSelectArgument
+                new TLV(0x80, 0, connectionHandle), // connectionHandle
+                new TLV(0x80, 1, dataSetName.getBytes()) // DataSetName
+            )
+        );
+    }
+    public static class DataSetSelectReturn extends ISO24727Return {
+        public DataSetSelectReturn(byte[] apdu) throws ISO24727Exception {
+            super(apdu, "DataSetSelect", 2038);
+        }
+    }
+
+    // DataSetDelete
+
+    // DSIList
+    public static TLV dsiList(byte[] connectionHandle) {
+        return new TLV(0x60, 2041,
+            new TLV(0xa0, 1, // DSIListArgument
+                new TLV(0x80, 0, connectionHandle) // connectionHandle
+            )
+        );
+    }
+    public static class DSIListReturn extends ISO24727Return {
+        public DSIListReturn(byte[] apdu) throws ISO24727Exception {
+            super(apdu, "DSIList", 2042);
+        }
+        public List<String> getDSINameList() {
+            List<String> result = new ArrayList<String>();
+            for (TLV name : tlv.get(0).get(0).split()) {
+                result.add(new String(name.getv()));
+            }
+            return result;
+        }
+    }
+
+    // DSICreate
+    // DSIDelete
+    // DSIRead
+    public static TLV dsiRead(byte[] connectionHandle, String dsiName) {
+        return new TLV(0x60, 2049,
+            new TLV(0xa0, 1, // DSIReadArgument
+                new TLV(0x80, 0, connectionHandle), // connectionHandle
+                new TLV(0x80, 1, dsiName.getBytes()) // DSIName
+            )
+        );
+    }
+    public static class DSIReadReturn extends ISO24727Return {
+        public DSIReadReturn(byte[] apdu) throws ISO24727Exception {
+            super(apdu, "DSIRead", 2050);
+        }
+        public TLV getDsi() { return tlv.get(-2).get(0); }
+    }
+
+
+    // ===== Cryptographic Service =====
+    // Encipher
+    // Decipher
+    // GetRandom
+    // Hash
+    // Sign
+    // VerifySignature
+    // VerifyCertificate
+
+    // ===== Differential-Identity Service =====
+    // DIDList
+    public static TLV didList(byte[] connectionHandle) {
+        return new TLV(0x60, 2065,
+            new TLV(0xa0, 1, // DIDListArgument
+                new TLV(0x80, 0, connectionHandle) // connectionHandle
+            )
+        );
+    }
+    public static class DIDListReturn extends ISO24727Return {
+        public DIDListReturn(byte[] apdu) throws ISO24727Exception {
+            super(apdu, "DIDList", 2066);
+        }
+        public List<String> getDIDNameList() {
+            List<String> result = new ArrayList<String>();
+            for (TLV name : tlv.get(0).get(0).split()) {
+                result.add(new String(name.getv()));
+            }
+            return result;
+        }
+    }
+
+    // DIDCreate
+
+    // DIDGet
+    public static TLV didGet(byte[] connectionHandle, int didScope, String didName) {
+        return new TLV(0x60, 2069,
+            new TLV(0xa0, 1, // DIDGetArgument
+                new TLV(0x80, 0, connectionHandle), // connectionHandle
+                new TLV(0xa0, 1, new TLV(0x80, didScope, (byte[]) null)), // didScope EXPLICIT0] -> IMPLICIT0 (local) / 1 (global)] NULL
+                new TLV(0x80, 2, didName.getBytes())
+            )
+        );
+    }
+    public static class DIDGetReturn extends ISO24727Return {
+        public DIDGetReturn(byte[] apdu) throws ISO24727Exception {
+            super(apdu, "DIDGet", 2070);
+        }
+        public TLV getMarker() { return tlv.get(-2).get(0).get(4); }
+    }
+
+    // DIDUpdate
+    // DIDDelete
 
     // DIDAuthenticate
     public static TLV didAuthenticate(byte[] connectionHandle, int didScope, String didName, byte[] didAuthData) {
@@ -155,23 +317,7 @@ public class ISO24727 {
         public TLV getAuthProtocolData() { return tlv.get(-2).get(0).get(0); }
     }
 
-    // DIDGet
-    public static TLV didGet(byte[] connectionHandle, int didScope, String didName) {
-        return new TLV(0x60, 2069,
-            new TLV(0xa0, 1, // DIDAuthenticateArgument
-                new TLV(0x80, 0, connectionHandle), // connectionHandle
-                new TLV(0xa0, 1, new TLV(0x80, didScope, (byte[]) null)), // didScope EXPLICIT0] -> IMPLICIT0 (local) / 1 (global)] NULL
-                new TLV(0x80, 2, didName.getBytes())
-            )
-        );
-    }
-    public static class DIDGetReturn extends ISO24727Return {
-        public DIDGetReturn(byte[] apdu) throws ISO24727Exception {
-            super(apdu, "DIDGet", 2070);
-        }
-        public TLV getMarker() { return tlv.get(-2).get(0).get(4); }
-    }
-
+    // ===== Authorization Service =====
     // ACLList
     public static TLV aclListDataSet(byte[] connectionHandle, String dataSet) {
         return new TLV(0x60, 2077,
@@ -210,36 +356,7 @@ public class ISO24727 {
         public TLV getAcl() { return tlv.get(-2).get(0); }
     }
 
-    // DataSetSelect
-    public static TLV dataSetSelect(byte[] connectionHandle, String dataSetName) {
-        return new TLV(0x60, 2037,
-            new TLV(0xa0, 1, // DataSetSelectArgument
-                new TLV(0x80, 0, connectionHandle), // connectionHandle
-                new TLV(0x80, 1, dataSetName.getBytes()) // DataSetName
-            )
-        );
-    }
-    public static class DataSetSelectReturn extends ISO24727Return {
-        public DataSetSelectReturn(byte[] apdu) throws ISO24727Exception {
-            super(apdu, "DataSetSelect", 2038);
-        }
-    }
-
-    // DSIRead
-    public static TLV dsiRead(byte[] connectionHandle, String dsiName) {
-        return new TLV(0x60, 2049,
-            new TLV(0xa0, 1, // DSIReadArgument
-                new TLV(0x80, 0, connectionHandle), // connectionHandle
-                new TLV(0x80, 1, dsiName.getBytes()) // DSIName
-            )
-        );
-    }
-    public static class DSIReadReturn extends ISO24727Return {
-        public DSIReadReturn(byte[] apdu) throws ISO24727Exception {
-            super(apdu, "DSIRead", 2050);
-        }
-        public TLV getDsi() { return tlv.get(-2).get(0); }
-    }
+    // ACLModify
 
 // AccessControlList ::= SET OF AccessRule
 // AccessRule ::= SEQUENCE {

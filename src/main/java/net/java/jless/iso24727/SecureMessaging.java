@@ -1,18 +1,25 @@
 /*
- * Copyright 2010 Joel Hockey (joel.hockey@gmail.com).  All rights reserved.
- * 
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are met:
- *     * Redistributions of source code must retain the above copyright
- *       notice, this list of conditions and the following disclaimer.
- * 
- * THIS SOURCE CODE IS PROVIDED BY JOEL HOCKEY WITH A 30-DAY MONEY BACK
- * GUARANTEE.  IF THIS CODE DOES NOT MEAN WHAT IT SAYS IT MEANS WITHIN THE
- * FIRST 30 DAYS, SIMPLY RETURN THIS CODE IN ORIGINAL CONDITION FOR A PARTIAL
- * REFUND.  IN ADDITION, I WILL REFORMAT THIS CODE USING YOUR PREFERRED
- * BRACE-POSITIONING AND INDENTATION.  THIS WARRANTY IS VOID IF THE CODE IS
- * FOUND TO HAVE BEEN COMPILED.  NO FURTHER WARRANTY IS OFFERED.
+ * Copyright 2010-2012 Joel Hockey (joel.hockey@gmail.com). All rights reserved.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ * THE SOFTWARE.
  */
+
 package net.java.jless.iso24727;
 
 import java.security.GeneralSecurityException;
@@ -31,7 +38,7 @@ import net.java.jless.codec.TLV;
 
 
 /**
- * ISO24727-4 Secure Messaging 
+ * ISO24727-4 Secure Messaging
  * @author Joel Hockey
  */
 public class SecureMessaging {
@@ -52,11 +59,11 @@ public class SecureMessaging {
         } catch (NoSuchAlgorithmException nsae) {
             throw new RuntimeException("Unexpected NoSuchAlgorithmException", nsae);
         }
-        
+
         // kdf1 uses key, seed, counter
         // [cardSaticKey] || onCardNonce || offCardNonce || 0x0? || {0,0,0,0}
         byte[] keySeed = Buf.cat(derivInputs);
-        
+
         md.update(keySeed);
         encSessionKey = Buf.substring(md.digest(new byte[] {0, 0, 0, 0, 0}), -16, 16);
         md.update(keySeed);
@@ -66,7 +73,7 @@ public class SecureMessaging {
 
         sendSequenceCounter[14] = 0;
         sendSequenceCounter[15] = 0;
-        
+
         try {
             aes = Cipher.getInstance("AES/CBC/NoPadding");
         } catch (GeneralSecurityException gse) {
@@ -121,7 +128,7 @@ public class SecureMessaging {
         if (padType == 1 && (totalLen & 0x0f) == 0) {
             return Buf.substring(encrypted, -16, 16);
         }
-        
+
         // there is some padding
         byte[] pad = new byte[16 - (totalLen & 0x0f)];
         if (padType == 2) {
@@ -134,8 +141,8 @@ public class SecureMessaging {
             throw new RuntimeException("Unexpected GeneralSecurityException", gse);
         }
     }
-        
-    
+
+
     /**
      * As per ISO24727-4 A.1 Secure Messaging
      * <ol>
@@ -158,7 +165,7 @@ public class SecureMessaging {
      * @return encrypted(msg || mac)
      */
     public byte[] encryptAndMac(byte[] msg) {
-          
+
         // (1) put into TLV using tag 0x52 (Tcmd)
         byte[] tag52 = TLV.encode(0x40, 0x12,
             // apdu header (extended length) - using ENVELOPE (0xc2)
@@ -166,12 +173,12 @@ public class SecureMessaging {
             msg, // msg
             new byte[2] //le (extended)
         );
-        
+
         // (2) A.1.1.3 - encrypt value from (1), then wrap in tag 0x85 (Tcg)
         // pad using ISO9797 part 2 (single 1 bit, then all zeros)
         int padLen = 16 - (tag52.length & 0x0f);
-        byte[] encryptInput = Buf.cat(tag52, Buf.substring(PAD_0X80, 0, padLen)); 
-        
+        byte[] encryptInput = Buf.cat(tag52, Buf.substring(PAD_0X80, 0, padLen));
+
         byte[] ssc = incSendSequenceCounter();
         byte[] encrypted;
         try {
@@ -181,7 +188,7 @@ public class SecureMessaging {
             throw new RuntimeException("Unexpected GeneralSecurityException", gse);
         }
         byte[] tag85 = TLV.encode(0x80, 0x05, encrypted);
-        
+
         // (3,4) mac => SSC || CH' (padded) || DOcg (tag85) || DOle (tag97)
         byte[] tag97 = Hex.s2b("97020000"); // extended Le inside tag 0x97
         byte[] tag8e = TLV.encode(0x80, 0x0e, mac(
@@ -190,7 +197,7 @@ public class SecureMessaging {
           tag85, // encrypted data
           tag97 // Le
         ));
-        
+
         // (5) result is CH' || Lc || DOcg (tag85) || DOle (tag97) || DOcc (tag8e) || New Le
         // We will leave off APDU header and Le which leaves DOcg || DOle || DOcc
         return Buf.cat(tag85, tag97, tag8e);
@@ -216,7 +223,7 @@ public class SecureMessaging {
      * @throws SecureMessagingException if error decrypting of validating mac
      */
     public byte[] decryptAndValidateMac(byte[] msg) throws SecureMessagingException {
-        
+
         // (1,2) decrypt
         List<TLV> parts = TLV.split(msg);
         byte[] tags = new byte[parts.size()];
@@ -249,7 +256,7 @@ public class SecureMessaging {
             throw new SecureMessagingException(String.format(
                     "Invalid MAC, expected %s, got %s", Hex.b2s(expectedcc), Hex.b2s(parts.get(2).getv())));
         }
-        
+
         return tlv.getv();
     }
 }
